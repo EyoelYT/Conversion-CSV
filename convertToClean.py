@@ -2,20 +2,10 @@ import csv
 import re
 from typing import List
 from datetime import datetime
-"""
-For every row in the csv
-    For every entry in a cell (after a comma)
-        If the entry is a title: 
-            Add to the list of titles (It is a title if it doesnt start with a number)
-        If the entry has the format "nnmin + ...":
 
 
-"""
-
-'''
-Changes 45min + 45min + 45min to 135
-Also Changes 1hr15mins + 45min to 240 mins
-'''
+# Changes 45min + 45min + 45min to 135
+# Also Changes 1hr15mins + 45min to 240 mins
 def change_mins_to_real_time(entry) -> int:
     # Split the entry by '+'
     entry = entry.split('+')
@@ -45,10 +35,9 @@ def change_mins_to_real_time(entry) -> int:
 
     return total_minutes
 
-'''
-Parses CSV data into arrays of arrays
-returns list of list that include strs and ints
-'''
+
+# Parses CSV data into arrays of arrays
+# returns list of list that include strs and ints
 def parse_csv_to_arrays(csv_content: str):
     # Split the input into lines
     lines = csv_content.strip().split('\n')
@@ -90,53 +79,59 @@ def parse_csv_to_arrays(csv_content: str):
     return result
 
 
+# Convert string into a List of lists
+def extract_course_times(data):
+    course_columns = {}
+    time_data = {}
+    
+    # Iterate over each row in the data
+    for row in data:
+        if '20' in row[0]:  # Check if the first cell might contain a date
+            date = row[0]
+            date_obj = datetime.strptime(date, '%A %B %d %Y')
+            for idx, time in enumerate(row[1:], start=1):
+                if time and isinstance(time, int):  # Check if there is a time entry
+                    course = course_columns.get(idx, "Unknown Course")
+                    if course not in time_data:
+                        time_data[course] = {}
+                    if date_obj not in time_data[course]:
+                        time_data[course][date_obj] = 0
+                    time_data[course][date_obj] += time
+        else:
+            # Update course mappings for current columns
+            for idx, title in enumerate(row):
+                if title:  # There's a new course title in this column
+                    course_columns[idx] = title
+    
+    return time_data
+
+
+# First read the csv into a variable
+csv_content = ""
 with open("ST & Work Log - Coursework Log.csv", newline='') as imput_csv_file:
     csv_reader = csv.reader(imput_csv_file)
-    modified_rows = []
-    set_of_days = set(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+    for row in csv_reader:
+        csv_content = csv_content + ','.join(row) + "\n"
+        
+# Turn the csv string into a list of lists
+parsed_data = parse_csv_to_arrays(csv_content)
+for row in parsed_data:
+    print(row[0])
 
-    # # Get Titles
-    # list_of_titles = []
-    # for line in csv_reader:
-    #     modified_row = []
-    #     for word in line:
-    #         # If title material
-    #         if len(word) > 1 and not word[0].isdigit() and word[0] != "(" and word.split(' ')[0] not in set_of_days:
-    #             if ("=" in word):
-    #                 word = word.partition("=")[0]
-    #             if (":" in word):
-    #                 word = word.partition(":")[0]
-    #             list_of_titles.append(word)
-    #             print(word)
-    #         # If minute material
-    #         if len(word) > 1 and word[0].isdigit():
-    #             print("This is digit entry", word)
-    current_titles = [0] * 10
-    database = dict() # key = title, value = total mins
+# Extract course times from the array into a dictionary of dictionaries
+#  with format: {"Course": {"date": total_time}, ...}
+# FIXME : Some kind of issue with the function? It truncates the date stored
+time_data = extract_course_times(parsed_data)
 
-    for line in csv_reader:
-        # line[0] is Date
-        for column, entry in enumerate(line):
-            # If title material
-            if len(entry) > 1 and not entry[0].isdigit() and entry[0] != "(" and entry.split(' ')[0] not in set_of_days:
-                if ("=" in entry):
-                    entry = entry.partition("=")[0]
-                if (":" in entry):
-                    entry = entry.partition(":")[0]
-                current_titles[column] = entry
-                database[entry] = 0
-            # If minute material
-            if len(entry) > 1 and entry[0].isdigit():
-                database[current_titles[column]] += change_mins_to_real_time(entry)
-                
-    print(current_titles)
+# # Write time_data content into txt file
+# with open("fileOne.txt", "a") as output_file:
+#     # Write the modified rows into the output csv file
+#     for course, dates in time_data.items():
+#         output_file.write(f"Course: {course}\n")
+#         for date, time in dates.items():
+#             output_file.write(f"  Date: {date.strftime('%Y-%m-%d')}, Time Studied: {time} minutes\n")
+#             # print(f"  Date: {date.strftime('%Y-%m-%d')}, Time Studied: {time} minutes")
 
-with open("output.csv", mode="w", newline="") as output_csv_file:
-    csv_writer = csv.writer(output_csv_file)
-
-    # Write the modified rows into the output csv file
-    for modified_row in modified_rows:
-        csv_writer.writerow(modified_row)
 
 print("Modified rows have successfully been written in output.csv")
 
