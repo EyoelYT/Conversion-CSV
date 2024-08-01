@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Changes 45min + 45min + 45min to 135
 # Also Changes 1hr15mins + 45min to 240 mins
-def change_mins_to_real_time(entry) -> int:
+def change_mins_to_real_time(entry: str) -> int:
     # Split the entry by '+'
     entry = entry.split('+')
 
@@ -106,17 +106,21 @@ def extract_course_times(data):
     return time_data
 
 
-# First read the csv into a variable
-csv_content = ""
-with open("ST & Work Log - Coursework Log.csv", newline='') as imput_csv_file:
-    csv_reader = csv.reader(imput_csv_file)
-    for row in csv_reader:
-        csv_content = csv_content + ','.join(row) + "\n"
-        
+# # First read the csv into a variable
+# csv_content = ""
+# with open("ST & Work Log - Coursework Log.csv", newline='') as imput_csv_file:
+#     csv_reader = csv.reader(imput_csv_file)
+#     for row in csv_reader:
+#         csv_content = csv_content + ','.join(row) + "\n"
+
+csv_content = "Friday September 3 2021,50min + 50min + 50min + 50min + 50min + 50min,,,,\nSaturday September 4 2021,,,,,\nSunday September 5 2021,,,(Morn) 50min + 50min + 50min + 50 min + 50 min + 43min = 4hr53min,,\nMonday September 6 2021,,,,,"
+
 # Turn the csv string into a list of lists
 parsed_data = parse_csv_to_arrays(csv_content)
-for row in parsed_data:
-    print(row[0])
+# for row in parsed_data:
+#     print(row)
+print(parsed_data)
+
 
 # Extract course times from the array into a dictionary of dictionaries
 #  with format: {"Course": {"date": total_time}, ...}
@@ -134,6 +138,3 @@ time_data = extract_course_times(parsed_data)
 
 
 print("Modified rows have successfully been written in output.csv")
-
-
-
